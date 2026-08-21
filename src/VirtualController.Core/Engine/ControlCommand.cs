@@ -25,6 +25,10 @@ public abstract record ControlCommand
     /// </summary>
     public sealed record ChangeMouseSettings(MouseSettings MouseSettings) : ControlCommand;
 
+    public sealed record SetMouseCapture(bool Enabled) : ControlCommand;
+
+    public sealed record SetEmergencyHotkey(HotkeyCombination? Hotkey) : ControlCommand;
+
     private ControlCommand()
     {
     }

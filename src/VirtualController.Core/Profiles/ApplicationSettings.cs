@@ -1,3 +1,5 @@
+using VirtualController.Core.Mapping;
+
 namespace VirtualController.Core.Profiles;
 
 /// <summary>
@@ -42,9 +44,21 @@ public sealed record ApplicationSettings
                 "recuperar el control del teclado y el mouse.");
         }
 
+        ValidateHotkey(EmergencyStop, "parada de emergencia");
+        ValidateHotkey(StartStop, "inicio/parada");
+        ValidateHotkey(ToggleMouseCapture, "captura del mouse");
+
         if (string.IsNullOrWhiteSpace(PreferredBackend))
         {
             throw new ProfileValidationException("El backend preferido no puede estar vacío.");
+        }
+    }
+
+    private static void ValidateHotkey(string text, string purpose)
+    {
+        if (!HotkeyCombination.TryParse(text, out _))
+        {
+            throw new ProfileValidationException($"El atajo de {purpose} no es válido: {text}.");
         }
     }
 }

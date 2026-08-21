@@ -133,6 +133,22 @@ public class EmergencyStopHotkeyTests
         Assert.True(loop.IsEmulating);
     }
 
+    [Fact]
+    public void ChangeEmergencyHotkey_AppliesWithoutRestartingLoop()
+    {
+        var (loop, gamepad, queue) = Create();
+        Assert.True(HotkeyCombination.TryParse("Ctrl+Alt+M", out var replacement));
+        loop.ApplyCommand(new ControlCommand.SetEmergencyHotkey(replacement));
+
+        Press(queue, Key.LeftControl);
+        Press(queue, Key.LeftAlt);
+        Press(queue, Key.M);
+        loop.RunIteration(queue, now: 1000);
+
+        Assert.False(loop.IsEmulating);
+        Assert.Equal(1, gamepad.ResetCount);
+    }
+
     [Theory]
     [InlineData("Ctrl+Alt+Escape", 3)]
     [InlineData("ctrl+alt+esc", 3)]

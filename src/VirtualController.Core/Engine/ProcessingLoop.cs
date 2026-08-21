@@ -59,6 +59,8 @@ public sealed class ProcessingLoop
     private long _nextSubmitDeadline;
     private long _nextSnapshotDeadline;
     private long _droppedEvents;
+    private bool _mouseCaptureEnabled = true;
+    private HotkeyCombination? _emergencyStopHotkey;
 
     public ProcessingLoop(
         IVirtualGamepad gamepad,
@@ -74,6 +76,7 @@ public sealed class ProcessingLoop
         _mouseConverter = mouseConverter;
         Metrics = metrics;
         _options = options ?? new ProcessingOptions();
+        _emergencyStopHotkey = _options.EmergencyStopHotkey;
 
         // Se resuelve una vez, no por iteración: leer el contador de la cola en cada ciclo generaba
         // ping-pong de caché con el hilo de captura.
@@ -120,6 +123,18 @@ public sealed class ProcessingLoop
 
             case ControlCommand.ChangeMouseSettings change:
                 ChangeMouseSettings(change.MouseSettings);
+                break;
+
+            case ControlCommand.SetMouseCapture capture:
+                _mouseCaptureEnabled = capture.Enabled;
+                if (!capture.Enabled)
+                {
+                    _mouseConverter.Reset();
+                }
+                break;
+
+            case ControlCommand.SetEmergencyHotkey emergency:
+                _emergencyStopHotkey = emergency.Hotkey;
                 break;
         }
     }
@@ -174,7 +189,7 @@ public sealed class ProcessingLoop
 
         // La combinación de emergencia se evalúa aquí, sobre el estado físico recién drenado: es lo que
         // la hace independiente de la UI (ADR-005, puntos 1 y 7).
-        if (_options.EmergencyStopHotkey?.IsFullyPressed(_activeInputs) == true)
+        if (_emergencyStopHotkey?.IsFullyPressed(_activeInputs) == true)
         {
             EmergencyStop();
             Metrics.RecordIteration(Stopwatch.GetTimestamp() - iterationStart);
@@ -194,7 +209,7 @@ public sealed class ProcessingLoop
         if (IsEmulating && HasReachedDeadline(now, ref _nextSubmitDeadline, _submitIntervalTicks))
         {
             _gamepad.Submit(_state);
-            Metrics.RecordSubmit();
+            Metrics.RecordSubmit(now, _submitIntervalTicks, _state, _mapping.MouseStick);
         }
 
         if (HasReachedDeadline(now, ref _nextSnapshotDeadline, _snapshotIntervalTicks))
@@ -229,6 +244,13 @@ public sealed class ProcessingLoop
 
         while (consumed < _options.InputDrainBudget && queue.TryRead(out var inputEvent))
         {
+            var captureTimestamp = inputEvent switch
+            {
+                InputEvent.Digital digital => digital.CaptureTimestamp,
+                InputEvent.MouseMove move => move.CaptureTimestamp,
+                _ => now,
+            };
+            Metrics.RecordInputLatency(now - captureTimestamp);
             Handle(inputEvent, now);
             consumed++;
         }
@@ -256,7 +278,10 @@ public sealed class ProcessingLoop
                 break;
 
             case InputEvent.MouseMove move:
-                _mouseConverter.AddDelta(move.DeltaX, move.DeltaY, move.CaptureTimestamp);
+                if (_mouseCaptureEnabled)
+                {
+                    _mouseConverter.AddDelta(move.DeltaX, move.DeltaY, move.CaptureTimestamp);
+                }
                 break;
         }
     }

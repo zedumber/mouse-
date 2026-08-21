@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using VirtualController.Core.Mapping;
 using VirtualController.Core.Profiles;
+using DomainBinding = VirtualController.Core.Mapping.Binding;
 
 namespace VirtualController.App.ViewModels;
 
@@ -50,7 +51,7 @@ public sealed partial class BindingEditorViewModel : ObservableObject
     {
         // Se añade una fila con la primera opción disponible; el usuario la ajusta con los
         // desplegables. Empezar con algo válido evita tener que representar una fila "vacía".
-        var binding = new Binding(InputOption.All[0].Value, OutputOption.All[0].Value);
+        var binding = new DomainBinding(InputOption.All[0].Value, OutputOption.All[0].Value);
 
         _editor.Add(binding);
         Rows.Add(new BindingRowViewModel(binding, OnRowChanged));
