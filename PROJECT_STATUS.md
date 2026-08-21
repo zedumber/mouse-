@@ -149,7 +149,8 @@ observar que **las dos situaciones tienen exigencias distintas**:
 - `hDevice` se descarta: no se distinguen varios teclados/mouse. ADR-002 lo describe
   (`RawInputDeviceRegistry`) pero nunca se implementó — hay que implementarlo o corregir el ADR.
 - Auto-repeat de teclado sin deduplicar: bajo saturación podría expulsar un `KeyUp` de la cola.
-- `MaximumOutput` escala todo el rango en vez de recortar la parte alta; el nombre sugiere otra cosa.
+- [x] La semántica ambigua de `MaximumOutput` quedó resuelta en V2: `OutputScale` controla la
+  ganancia y `MaximumOutput` es ahora un límite real, con migración compatible desde V1.
 - Contradicción entre ADR-004 y el código sobre dónde viven los hotkeys de perfil, y el ADR documenta
   `Mouse.LeftButton` cuando el código emite `Mouse.Left`.
 
@@ -162,8 +163,9 @@ binario nuevo carece de reputación.
 
 **Alcance real, verificado:**
 - La aplicación **no arranca**, y el spike y `VirtualController.VirtualGamepad.Tests` no pueden cargar.
-- **Los otros 201 tests siguen pasando** (Core 64, Mapping 126, Input 11): solo afecta a lo que toca
-  el SDK de ViGEm.
+- El alcance varía con cada recompilación sin firma: además del backend, Smart App Control ha bloqueado
+  una DLL nueva de Infrastructure y con ello los tests de persistencia. Las suites puras siguen siendo
+  ejecutables; ver `Last verification` para las cifras actuales.
 - Antes del bloqueo, el spike había pasado 14/14 contra hardware real y la app funcionó end-to-end
   (ver secciones de Fase 3 y Fase 4): **el bloqueo es de política de Windows, no un defecto del código**.
 
@@ -394,6 +396,7 @@ Suites ejecutables tras la mejora de puntería: Mapping **165/165**, App **33/33
 La ejecución previa de `VirtualGamepad.Tests` cargó 28 pruebas: 27 pasaron y `Connect_LeavesDeviceInNeutralState` no obtuvo estado XInput; requiere diagnóstico con hardware/backend.
 Spike Fase 3 contra XInput real: PASS — 14/14 comprobaciones, latencia mediana 0.02 ms (ejecutado antes del bloqueo)
 Arranque real de la app tras el saneamiento: PASS — desde cero creó `Profiles/<guid>.json` **y** `Settings/settings.json` (este último antes no se creaba nunca), ventana abierta, cierre limpio sin procesos huérfanos
-Verificación con mando virtual real: NO REALIZADA — ViGEmBus no instalado (ver Known issues)
+Verificación con mando virtual real: PARCIAL — el backend conecta y 27/28 tests pasaron en la última
+ejecución; falta resolver la lectura neutral de XInput y probar dentro de un juego real.
 .NET SDK: 10.0.400 (instalado vía winget en esta sesión; no estaba presente en la máquina)
 Nota de formato: `dotnet new sln` en .NET 10 genera `.slnx` (XML) en vez de `.sln` — la solución es `VirtualController.slnx`, no `VirtualController.sln`
