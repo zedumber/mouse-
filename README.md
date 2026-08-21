@@ -92,4 +92,3 @@ Consulta [PROJECT_STATUS.md](PROJECT_STATUS.md) para el estado detallado, riesgo
 Respeta las condiciones de servicio del juego y de su plataforma. Este proyecto se limita a remapear
 entrada local a un mando virtual; no incluye lectura de pantalla, selección de objetivos ni automatización
 de disparos.
-
