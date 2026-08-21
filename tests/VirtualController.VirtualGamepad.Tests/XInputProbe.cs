@@ -8,6 +8,8 @@ namespace VirtualController.VirtualGamepad.Tests;
 /// </summary>
 internal static class XInputProbe
 {
+    internal readonly record struct ControllerObservation(uint Index, XInputGamepad Gamepad);
+
     [StructLayout(LayoutKind.Sequential)]
     internal struct XInputGamepad
     {
@@ -33,15 +35,48 @@ internal static class XInputProbe
     private const uint ErrorSuccess = 0;
     private const uint MaxControllers = 4;
 
-    public static XInputGamepad? ReadFirstConnected()
+    public static ControllerObservation? WaitForController(
+        Func<XInputGamepad, bool> predicate,
+        TimeSpan timeout)
     {
-        for (uint i = 0; i < MaxControllers; i++)
+        var deadline = Environment.TickCount64 + (long)timeout.TotalMilliseconds;
+
+        do
         {
-            if (XInputGetState(i, out var state) == ErrorSuccess)
+            for (uint i = 0; i < MaxControllers; i++)
+            {
+                if (XInputGetState(i, out var state) != ErrorSuccess || !predicate(state.Gamepad))
+                {
+                    continue;
+                }
+
+                return new ControllerObservation(i, state.Gamepad);
+            }
+
+            Thread.Sleep(10);
+        }
+        while (Environment.TickCount64 < deadline);
+
+        return null;
+    }
+
+    public static XInputGamepad? WaitForState(
+        uint index,
+        Func<XInputGamepad, bool> predicate,
+        TimeSpan timeout)
+    {
+        var deadline = Environment.TickCount64 + (long)timeout.TotalMilliseconds;
+
+        do
+        {
+            if (XInputGetState(index, out var state) == ErrorSuccess && predicate(state.Gamepad))
             {
                 return state.Gamepad;
             }
+
+            Thread.Sleep(10);
         }
+        while (Environment.TickCount64 < deadline);
 
         return null;
     }

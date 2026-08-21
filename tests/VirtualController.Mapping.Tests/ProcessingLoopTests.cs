@@ -171,6 +171,25 @@ public class ProcessingLoopTests
     }
 
     [Fact]
+    public void DisableMouseCapture_NeutralizesAndIgnoresMovementUntilReenabled()
+    {
+        var (loop, gamepad, queue) = Create();
+        queue.TryWrite(new InputEvent.MouseMove(50, 0, 1000));
+        loop.RunIteration(queue, 1000);
+        Assert.NotEqual(0f, gamepad.LastState.RightStickX);
+
+        loop.ApplyCommand(new ControlCommand.SetMouseCapture(false));
+        queue.TryWrite(new InputEvent.MouseMove(50, 0, 1001));
+        loop.RunIteration(queue, 1001);
+        Assert.Equal(0f, gamepad.LastState.RightStickX);
+
+        loop.ApplyCommand(new ControlCommand.SetMouseCapture(true));
+        queue.TryWrite(new InputEvent.MouseMove(50, 0, 1002));
+        loop.RunIteration(queue, 1002);
+        Assert.NotEqual(0f, gamepad.LastState.RightStickX);
+    }
+
+    [Fact]
     public void MouseStops_StickDecaysWithoutNewInput()
     {
         var (loop, gamepad, queue) = Create(new MouseSettings
@@ -335,6 +354,21 @@ public class ProcessingLoopTests
         var metrics = loop.Metrics.Snapshot();
         Assert.Equal(2, metrics.InputEventsProcessed);
         Assert.Equal(1, metrics.GamepadSubmits);
+    }
+
+    [Fact]
+    public void Metrics_MeasureLatencySaturationAndSubmitJitter()
+    {
+        var (loop, _, queue) = Create();
+
+        queue.TryWrite(new InputEvent.MouseMove(100, 0, 900));
+        loop.RunIteration(queue, now: 1000);
+        loop.RunIteration(queue, now: 1002);
+
+        var metrics = loop.Metrics.Snapshot();
+        Assert.Equal(100_000d, metrics.AverageInputLatencyMicroseconds, precision: 1);
+        Assert.Equal(50d, metrics.AimSaturationPercent, precision: 1);
+        Assert.Equal(1_000d, metrics.AverageSubmitJitterMicroseconds, precision: 1);
     }
 
     [Fact]

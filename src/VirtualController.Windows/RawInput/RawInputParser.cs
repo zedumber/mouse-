@@ -92,18 +92,23 @@ internal static class RawInputParser
     // distinguir left/right de forma fiable requiere inspeccionar MakeCode + el flag RI_KEY_E0.
     // Como Key solo tiene "LeftShift" (sin "RightShift" todavía), aceptamos ambos valores conocidos
     // sin necesitar esa disambiguación por ahora.
-    private static Key? MapVirtualKey(ushort virtualKey) => virtualKey switch
+    private static Key? MapVirtualKey(ushort virtualKey)
     {
-        0x57 => Key.W,
-        0x41 => Key.A,
-        0x53 => Key.S,
-        0x44 => Key.D,
-        0x20 => Key.Space,
-        0x51 => Key.Q,
-        0x45 => Key.E,
-        0x52 => Key.R,
-        0x10 or 0xA0 => Key.LeftShift,
-        0x1B => Key.Escape,
-        _ => null,
-    };
+        // VK_A..VK_Z son contiguos, igual que Key.A..Key.Z. Cubrir el alfabeto completo permite
+        // que los hotkeys configurables no fallen con letras que no estén en el perfil por defecto.
+        if (virtualKey is >= 0x41 and <= 0x5A)
+        {
+            return (Key)(virtualKey - 0x41);
+        }
+
+        return virtualKey switch
+        {
+            0x20 => Key.Space,
+            0x10 or 0xA0 => Key.LeftShift,
+            0x11 or 0xA2 => Key.LeftControl,
+            0x12 or 0xA4 => Key.LeftAlt,
+            0x1B => Key.Escape,
+            _ => null,
+        };
+    }
 }

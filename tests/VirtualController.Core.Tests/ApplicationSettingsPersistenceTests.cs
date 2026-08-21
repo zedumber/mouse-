@@ -93,6 +93,14 @@ public sealed class ApplicationSettingsPersistenceTests : IDisposable
     }
 
     [Fact]
+    public void Save_WithUnparseableGlobalHotkey_IsRejected()
+    {
+        var invalid = new ApplicationSettings { ToggleMouseCapture = "Ctrl+Alt+DefinitelyNotAKey" };
+
+        Assert.Throws<ProfileValidationException>(() => _repository.Save(invalid));
+    }
+
+    [Fact]
     public void Load_HandEditedEmptyEmergencyStop_IsRejected()
     {
         // El caso que motiva validar en dominio y no solo en la UI: el usuario edita el JSON a mano.

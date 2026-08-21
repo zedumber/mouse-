@@ -47,6 +47,64 @@
                 <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding ProfileName}"/>
             </Grid>
 
+            <TextBlock Text="PERFILES" Style="{StaticResource SectionHeader}"/>
+            <Grid DataContext="{Binding ProfileSelector}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="150"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+                <ComboBox ItemsSource="{Binding Profiles}" DisplayMemberPath="Name"
+                          SelectedItem="{Binding SelectedProfile, Mode=TwoWay}" Height="28" Margin="0,0,8,0"/>
+                <TextBox Grid.Column="1" Text="{Binding NameDraft, UpdateSourceTrigger=PropertyChanged}"
+                         Height="28" Padding="6,3"/>
+                <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,8,0,0">
+                    <Button Content="Crear" Command="{Binding CreateCommand}" Padding="10,3"/>
+                    <Button Content="Duplicar" Command="{Binding DuplicateCommand}" Padding="10,3" Margin="6,0,0,0"/>
+                    <Button Content="Renombrar" Command="{Binding RenameCommand}" Padding="10,3" Margin="6,0,0,0"/>
+                    <Button Content="Eliminar" Command="{Binding DeleteCommand}" Padding="10,3" Margin="6,0,0,0"
+                            Foreground="#FFB3B3"/>
+                    <TextBlock Text="{Binding StatusMessage}" Foreground="#7BD88F" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Grid>
+            <TextBlock DataContext="{Binding ProfileSelector}" Text="{Binding ErrorMessage}" Foreground="#FFB3B3"
+                       TextWrapping="Wrap" Margin="0,5,0,0"
+                       Visibility="{Binding ErrorMessage, Converter={StaticResource NullToCollapsed}}"/>
+
+            <TextBlock Text="HOTKEYS Y BANDEJA" Style="{StaticResource SectionHeader}"/>
+            <Grid DataContext="{Binding Settings}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="160"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/>
+                </Grid.RowDefinitions>
+                <TextBlock Text="Iniciar / detener" Style="{StaticResource Label}" VerticalAlignment="Center"/>
+                <TextBox Grid.Column="1" Text="{Binding StartStop, UpdateSourceTrigger=PropertyChanged}" Padding="5,2"/>
+                <TextBlock Grid.Row="1" Text="Pausar mouse" Style="{StaticResource Label}" VerticalAlignment="Center"/>
+                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding ToggleMouseCapture, UpdateSourceTrigger=PropertyChanged}"
+                         Padding="5,2" Margin="0,4,0,0"/>
+                <TextBlock Grid.Row="2" Text="Parada emergencia" Style="{StaticResource Label}" VerticalAlignment="Center"/>
+                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding EmergencyStop, UpdateSourceTrigger=PropertyChanged}"
+                         Padding="5,2" Margin="0,4,0,0"/>
+                <CheckBox Grid.Row="3" Grid.ColumnSpan="2" Content="Iniciar minimizado"
+                          IsChecked="{Binding StartMinimized}" Margin="0,7,0,0"/>
+                <CheckBox Grid.Row="4" Grid.ColumnSpan="2" Content="Minimizar y cerrar a la bandeja"
+                          IsChecked="{Binding MinimizeToTray}" Margin="0,4,0,0"/>
+                <StackPanel Grid.Row="5" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,8,0,0">
+                    <Button Content="Guardar configuración" Command="{Binding SaveCommand}" Padding="10,3"/>
+                    <TextBlock Text="{Binding StatusMessage}" Foreground="#7BD88F" Margin="10,0,0,0"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+            </Grid>
+            <TextBlock DataContext="{Binding Settings}" Text="{Binding ValidationError}" Foreground="#FFB3B3"
+                       TextWrapping="Wrap" Margin="0,5,0,0"
+                       Visibility="{Binding ValidationError, Converter={StaticResource NullToCollapsed}}"/>
+
             <Button Content="{Binding StartStopLabel}"
                     Command="{Binding ToggleEmulationCommand}"
                     Height="40" Margin="0,16,0,0"
@@ -123,6 +181,82 @@
             <TextBlock Text="DIAGNÓSTICO" Style="{StaticResource SectionHeader}"/>
             <TextBlock Text="{Binding MetricsText}" FontFamily="Consolas" FontSize="11"
                        TextWrapping="Wrap" Foreground="#A0A0A0"/>
+            <Button Content="Reiniciar medición" Height="26" Padding="10,0" Margin="0,6,0,0"
+                    HorizontalAlignment="Left" Command="{Binding ResetMetricsCommand}"/>
+            <TextBlock Text="{Binding LogFile, StringFormat=Log persistente: {0}}" FontSize="10"
+                       Foreground="#777777" TextWrapping="Wrap" Margin="0,5,0,0"/>
+
+            <TextBlock Text="ASISTENTE DE CALIBRACIÓN" Style="{StaticResource SectionHeader}"/>
+            <Border DataContext="{Binding Calibration}" Background="#252526" BorderBrush="#3E3E42"
+                    BorderThickness="1" CornerRadius="5" Padding="12">
+                <StackPanel>
+                    <TextBlock Text="{Binding StepTitle}" FontWeight="SemiBold" Foreground="#8FB3FF"/>
+                    <TextBlock Text="{Binding Instructions}" TextWrapping="Wrap" Foreground="#B8B8B8"
+                               Margin="0,5,0,10"/>
+
+                    <Grid Visibility="{Binding ShowDeadzoneStep, Converter={StaticResource BoolToVisible}}">
+                        <Grid.RowDefinitions>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="160"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="58"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Umbral observado" Style="{StaticResource Label}"/>
+                        <Slider Grid.Column="1" Minimum="0" Maximum="0.30"
+                                Value="{Binding ObservedGameDeadzone, Mode=TwoWay}"/>
+                        <TextBlock Grid.Column="2" Text="{Binding ObservedGameDeadzone, StringFormat={}{0:F2}}"
+                                   HorizontalAlignment="Right" FontFamily="Consolas"/>
+                        <TextBlock Grid.Row="1" Grid.ColumnSpan="3"
+                                   Text="{Binding RecommendedAntiDeadzone, StringFormat='Se aplicará anti-deadzone {0:F2} (incluye margen 0,01).'}"
+                                   Foreground="#7BD88F" Margin="0,6,0,0"/>
+                    </Grid>
+
+                    <Grid Visibility="{Binding ShowNormalSensitivityStep, Converter={StaticResource BoolToVisible}}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="160"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="58"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Counts para giro completo" Style="{StaticResource Label}"/>
+                        <Slider Grid.Column="1" Minimum="20" Maximum="1000"
+                                Value="{Binding CountsForFullDeflection, Mode=TwoWay}"/>
+                        <TextBlock Grid.Column="2" Text="{Binding CountsForFullDeflection, StringFormat={}{0:F0}}"
+                                   HorizontalAlignment="Right" FontFamily="Consolas"/>
+                    </Grid>
+
+                    <Grid Visibility="{Binding ShowAdsStep, Converter={StaticResource BoolToVisible}}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="160"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="58"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Multiplicador ADS" Style="{StaticResource Label}"/>
+                        <Slider Grid.Column="1" Minimum="0.2" Maximum="1"
+                                Value="{Binding AdsSensitivityMultiplier, Mode=TwoWay}"/>
+                        <TextBlock Grid.Column="2" Text="{Binding AdsSensitivityMultiplier, StringFormat={}{0:F2}}"
+                                   HorizontalAlignment="Right" FontFamily="Consolas"/>
+                    </Grid>
+
+                    <Border Visibility="{Binding ShowMeasurementStep, Converter={StaticResource BoolToVisible}}"
+                            Background="#20272A" Padding="9" CornerRadius="3">
+                        <TextBlock Text="Guía: latencia media &lt; 2 ms; vigila picos &gt; 10 ms; saturación sostenida por encima de 40 % suele indicar demasiada sensibilidad. Compara el jitter entre sesiones."
+                                   TextWrapping="Wrap" Foreground="#A9D5C0"/>
+                    </Border>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                        <Button Content="Iniciar / reiniciar" Command="{Binding StartCommand}" Padding="10,3"/>
+                        <Button Content="Anterior" Command="{Binding PreviousCommand}" Padding="10,3" Margin="6,0,0,0"/>
+                        <Button Content="Siguiente" Command="{Binding NextCommand}" Padding="10,3" Margin="6,0,0,0"/>
+                        <Button Content="Aplicar y guardar" Command="{Binding ApplyAndSaveCommand}" Padding="10,3"
+                                Margin="6,0,0,0" Background="#2D5BE3" Foreground="White"/>
+                    </StackPanel>
+                    <TextBlock Text="{Binding StatusMessage}" Foreground="#7BD88F" TextWrapping="Wrap"
+                               Margin="0,7,0,0"/>
+                </StackPanel>
+            </Border>
 
             <TextBlock Text="AJUSTES DE MOUSE" Style="{StaticResource SectionHeader}"/>
             <TextBlock Text="Los cambios se aplican al instante para que puedas afinarlos mirando el visualizador. Guardar los escribe en el perfil."

@@ -12,8 +12,11 @@ Está pensada para ofrecer una conversión mouse → stick configurable, predeci
 - Captura global de teclado y mouse mediante Windows Raw Input.
 - Emulación de mando Xbox 360 a través de un backend desacoplado.
 - Editor visual de bindings con validación de conflictos.
+- Selector y gestión de perfiles por juego.
+- Hotkeys globales configurables e icono de bandeja.
 - Perfiles JSON versionados y escritura atómica.
-- Visualizador de sticks, gatillos, botones y métricas en tiempo real.
+- Visualizador de sticks, gatillos, botones y métricas de latencia/saturación/jitter en tiempo real.
+- Asistente de calibración por juego y logging JSON persistente con retención de 14 días.
 - Parada de emergencia desde el flujo de entrada.
 - Conversión avanzada de mouse a stick:
   - sensibilidad independiente X/Y;
@@ -69,6 +72,9 @@ Los perfiles y ajustes se guardan en:
 5. Configura ADS y comprueba que el gatillo izquierdo virtual corresponde a apuntar.
 6. Reduce smoothing si notas latencia; aumenta su respuesta adaptativa si los giros se sienten lentos.
 
+También puedes usar el **Asistente de calibración** integrado: aplica Equilibrado, guía los ajustes
+de anti-deadzone/normal/ADS y reinicia la muestra de diagnóstico antes de guardar el perfil.
+
 Cada juego aplica sus propias deadzones, curvas y velocidad máxima. Por eso se recomienda un perfil
 independiente por juego en lugar de un ajuste universal.
 
@@ -86,6 +92,8 @@ docs/architecture/                     Decisiones de arquitectura (ADR)
 ```
 
 Consulta [PROJECT_STATUS.md](PROJECT_STATUS.md) para el estado detallado, riesgos y verificaciones.
+La decisión de migración y firma está en
+[ADR-003A](docs/architecture/ADR-003A-backend-and-signing-strategy.md).
 
 ## Uso responsable
 

@@ -2,7 +2,7 @@
 
 ## Current phase
 
-Phase 7 - UI y preparación de release (fases 1, 4, 5 y 6 completas; fase 2 pendiente de verificación humana; backend condicionado por Smart App Control y validación XInput)
+Prueba en juego y preparación de release (UI funcional completa; fase 2 pendiente de verificación humana; publicación condicionada por Smart App Control/firma)
 
 ## Completed
 
@@ -21,11 +21,16 @@ Phase 7 - UI y preparación de release (fases 1, 4, 5 y 6 completas; fase 2 pend
 - [x] Definition of Done detallada por fase alineada con el contenido final de cada ADR (ver secciones más abajo)
 - [x] Pipeline avanzado de puntería V2: curva Dual Zone, anti-deadzone de salida, escala/límite separados, smoothing adaptativo, retención de decay y modo ADS derivado de `LeftTrigger`
 - [x] Migración compatible de perfiles V1 a V2 y controles/presets de puntería en la UI
+- [x] Test XInput estabilizado: un único ciclo de hardware identifica el slot por un estado marcador y verifica reset neutral (27/27)
+- [x] Telemetría de latencia de input, saturación de aim y jitter de `Submit`
+- [x] Selector/gestión de perfiles, hotkeys globales configurables, bandeja y pausa de captura de mouse
+- [x] Logging JSON persistente diario (14 días) y asistente de calibración de cuatro pasos por juego
+- [x] Estrategia de backend/firma aceptada en `ADR-003A`: ViGEm para prueba personal inmediata; HIDMaestro como objetivo tras spike; release pública firmada por CA de confianza
 
 ## In progress
 
-- [ ] Fase 7 — UI: faltan selector de perfiles, hotkeys globales y tray icon; editor de bindings y ajustes avanzados están completos
-- [ ] Fase 3 — cerrar `ADR-003A`, resolver la comprobación XInput restante y validar estrategia de firma/backend (ver Known issues)
+- [ ] Prueba humana dentro de un juego: calibrar y recoger una muestra de al menos 30 segundos
+- [ ] Fase 3 — implementar/evaluar `HidMaestroXboxBackend` antes de convertirlo en predeterminado (gate de `ADR-003A`)
 - [ ] Fase 2 — falta confirmar visualmente la captura con hardware físico usando el visor ya construido
 
 ### Estado de revisión de ADRs
@@ -42,9 +47,12 @@ Phase 7 - UI y preparación de release (fases 1, 4, 5 y 6 completas; fase 2 pend
 ## Pending
 
 - [ ] Fase 3 — Decisión final de backend como `ADR-003A`, firma y validación en hardware/juegos
-- [ ] Fase 7 — Selector de perfiles, hotkeys globales y tray icon (ver Definition of Done)
+- [x] Fase 7 — Selector de perfiles, hotkeys globales, tray icon, logging y calibración
 - [ ] Fase 8 — Optimización basada en mediciones (recoge todos los puntos "diferido a Fase 8" de ADR-002/ADR-005)
 - [ ] Fase 9 — Release (instalador, first-run checks, firma y manual; README inicial ya creado)
+- [ ] Fase 10 — Aim trainer separado, solo después de validar el controlador en juego: ventana y
+      objetivos propios, detección limitada a esa ventana, seguimiento suave y métricas de error,
+      reacción y overshoot. No se integra lectura/selección de enemigos en juegos de terceros.
 
 ## Saneamiento 2026-08-20 — bugs encontrados y corregidos
 
@@ -189,8 +197,8 @@ anotaba sobre firma y distribución, ahora con evidencia empírica en vez de com
 **Deuda consciente (no bugs):**
 - Existe migración V1→V2 para conservar la semántica antigua de `MaximumOutput`; futuras versiones necesitarán migraciones secuenciales adicionales.
 - La espera en reposo ya usa una señal y evita quemar un núcleo; falta volver a medir CPU/latencia durante emulación activa.
-- Sin logging estructurado todavía (requisito 21): los errores llegan a la UI pero no se escriben a `Logs/`.
-- Sin selector de perfiles en la UI; el editor de bindings ya está implementado.
+- Smart App Control puede bloquear cada DLL propia recién recompilada hasta que exista una cadena de firma/reputación aceptada.
+- El backend HIDMaestro objetivo todavía no está integrado; ViGEm sigue siendo el backend probado para la sesión personal.
 
 ## Definition of Done por fase
 
@@ -342,9 +350,11 @@ aislamiento y HIDMaestro sigue anotado como alternativa.
   `OutputScale` separado del límite real, curva Dual Zone continua, smoothing adaptativo, retención
   temporal antes del decay y modo ADS activado por el `LeftTrigger` virtual (respeta remapeos).
   Incluye migración V1→V2, persistencia, controles en vivo, tres presets y pruebas matemáticas/integración.
-- [ ] Selector de perfiles desde la UI (crear/duplicar/renombrar ya existen en `ProfileService`, falta la pantalla)
-- [ ] Hotkeys globales configurables (requisito 19): `ApplicationSettings` ya los modela y valida, pero nada los registra/escucha todavía
-- [ ] Icono de bandeja del sistema
+- [x] Selector de perfiles desde la UI: seleccionar, crear, duplicar, renombrar y eliminar con confirmación
+- [x] Hotkeys globales configurables (iniciar/detener, pausar mouse y emergencia), re-registrados en vivo con `RegisterHotKey`
+- [x] Icono de bandeja con mostrar, iniciar/detener, pausar mouse y salida segura
+- [x] Logging estructurado JSON-lines en `%LOCALAPPDATA%\VirtualController\Logs`, con rotación diaria y retención
+- [x] Asistente por juego: preset Equilibrado, anti-deadzone, sensibilidad normal, ADS y muestra diagnóstica
 
 ## Estructura de proyectos (definida en Fase 0; creada en Fase 1)
 
@@ -388,15 +398,18 @@ docs/
 
 ## Last verification
 
-Verificación 2026-08-21:
+Verificación 2026-08-21 (estado actual):
 
-dotnet build (`VirtualController.slnx`, 11 proyectos): PASS — 0 advertencias, 0 errores.
-Suites ejecutables tras la mejora de puntería: Mapping **165/165**, App **33/33**, Input **11/11**.
-`Core.Tests`: 48 pruebas puras pasan y 35 de persistencia quedan bloqueadas al cargar la DLL recién compilada de Infrastructure por Smart App Control (`0x800711C7`); no son aserciones fallidas.
-La ejecución previa de `VirtualGamepad.Tests` cargó 28 pruebas: 27 pasaron y `Connect_LeavesDeviceInNeutralState` no obtuvo estado XInput; requiere diagnóstico con hardware/backend.
-Spike Fase 3 contra XInput real: PASS — 14/14 comprobaciones, latencia mediana 0.02 ms (ejecutado antes del bloqueo)
-Arranque real de la app tras el saneamiento: PASS — desde cero creó `Profiles/<guid>.json` **y** `Settings/settings.json` (este último antes no se creaba nunca), ventana abierta, cierre limpio sin procesos huérfanos
-Verificación con mando virtual real: PARCIAL — el backend conecta y 27/28 tests pasaron en la última
-ejecución; falta resolver la lectura neutral de XInput y probar dentro de un juego real.
+- `dotnet build VirtualController.slnx -c Release`: **PASS**, 11 proyectos, 0 advertencias, 0 errores.
+- Core **87/87**, Mapping **168/168**, Input **15/15** y VirtualGamepad/XInput **27/27**: **PASS**.
+- App **42 pruebas**: pasaron en la ejecución anterior a la recompilación; tras generar un DLL nuevo,
+  Smart App Control impide cargarlo con `0x800711C7`. El runner informa 42 fallos de carga y ninguna
+  aserción ejecutada; no se desactiva la protección.
+- Arranque del binario previo a la última recompilación: **PASS**, ventana `Virtual Controller`
+  respondiendo y primer evento escrito en `Logs/virtual-controller-20260821.jsonl`.
+- Test XInput corregido: identifica el slot por estado marcador, verifica neutralización y pasa 27/27.
+- Prueba dentro de juego: **pendiente de usuario**; usar el asistente y registrar una muestra de 30 s.
+- Firma pública y migración de backend: decisión documentada en `ADR-003A`.
+
 .NET SDK: 10.0.400 (instalado vía winget en esta sesión; no estaba presente en la máquina)
 Nota de formato: `dotnet new sln` en .NET 10 genera `.slnx` (XML) en vez de `.sln` — la solución es `VirtualController.slnx`, no `VirtualController.sln`

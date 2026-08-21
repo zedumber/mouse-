@@ -62,6 +62,8 @@ public sealed class EmulationService : IDisposable
 
     public MetricsSnapshot Metrics => _loop.Metrics.Snapshot();
 
+    public void ResetMetrics() => _loop.Metrics.Reset();
+
     public bool IsRunning => _processingTask is { IsCompleted: false };
 
     /// <summary>Margen para que el bucle observe la cancelación y termine su iteración en curso.</summary>
@@ -163,6 +165,12 @@ public sealed class EmulationService : IDisposable
     /// </summary>
     public void ChangeMouseSettings(MouseSettings settings) =>
         _commands.Enqueue(new ControlCommand.ChangeMouseSettings(settings));
+
+    public void SetMouseCaptureEnabled(bool enabled) =>
+        _commands.Enqueue(new ControlCommand.SetMouseCapture(enabled));
+
+    public void SetEmergencyHotkey(HotkeyCombination? hotkey) =>
+        _commands.Enqueue(new ControlCommand.SetEmergencyHotkey(hotkey));
 
     /// <summary>
     /// Parada de emergencia solicitada desde la UI. Es el camino secundario: el principal es la

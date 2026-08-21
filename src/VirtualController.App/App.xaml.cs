@@ -1,17 +1,20 @@
 using System.Windows;
 using VirtualController.App.Composition;
 using VirtualController.App.ViewModels;
+using VirtualController.Core.Diagnostics;
 using VirtualController.Core.Engine;
 using VirtualController.Core.Input;
 using VirtualController.Core.Profiles;
+using VirtualController.Infrastructure.Diagnostics;
 using VirtualController.Infrastructure.Persistence;
 using VirtualController.Windows.RawInput;
 
 namespace VirtualController.App;
 
-public partial class App : Application
+public partial class App : System.Windows.Application
 {
     private EmulationService? _emulation;
+    private IAppLogger _logger = NullAppLogger.Instance;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -21,16 +24,19 @@ public partial class App : Application
         // cursor capturado (requisito 20).
         DispatcherUnhandledException += (_, args) =>
         {
+            _logger.Error("unhandled-ui-exception", "La UI produjo una excepción no controlada.", args.Exception);
             ShutdownEmulationSafely();
-            MessageBox.Show(
+            System.Windows.MessageBox.Show(
                 $"Se produjo un error inesperado y la emulación se detuvo:\n\n{args.Exception.Message}",
                 "Virtual Controller",
-                MessageBoxButton.OK,
-                MessageBoxImage.Error);
+                System.Windows.MessageBoxButton.OK,
+                System.Windows.MessageBoxImage.Error);
             args.Handled = true;
         };
 
         var paths = new StoragePaths();
+        _logger = CreateLogger(paths);
+        _logger.Information("application-start", "Virtual Controller iniciado.");
         var repository = new JsonProfileRepository(paths);
         var profileService = new ProfileService(repository);
         var settingsRepository = new JsonApplicationSettingsRepository(paths);
@@ -41,11 +47,15 @@ public partial class App : Application
         var gamepad = BackendResolver.Resolve(profile.ControllerType, settings.PreferredBackend);
         var queue = new ChannelInputEventQueue();
 
-        void ReportError(Exception ex) => Dispatcher.Invoke(() => MessageBox.Show(
-            $"El motor de entrada se detuvo por un error:\n\n{ex.Message}",
-            "Virtual Controller",
-            MessageBoxButton.OK,
-            MessageBoxImage.Error));
+        void ReportError(Exception ex)
+        {
+            _logger.Error("emulation-failure", "El motor de entrada se detuvo.", ex);
+            Dispatcher.Invoke(() => System.Windows.MessageBox.Show(
+                $"El motor de entrada se detuvo por un error:\n\n{ex.Message}",
+                "Virtual Controller",
+                System.Windows.MessageBoxButton.OK,
+                System.Windows.MessageBoxImage.Error));
+        }
 
         var inputSource = new RawInputHost(queue, ReportError);
 
@@ -59,28 +69,22 @@ public partial class App : Application
             metricsEnabled: true,
             settings: settings);
 
-        // Al guardar bindings se avisa al motor para que aplique el perfil nuevo sin reiniciar la app.
-        // El cambio se aplica en la frontera de una iteración, así que no deja un estado híbrido
-        // entre la configuración vieja y la nueva (ADR-005, punto 6).
-        var bindingEditor = new BindingEditorViewModel(
-            new BindingEditor(repository, profile),
-            onSaved: updated => _emulation?.ChangeProfile(updated));
-
-        // Los ajustes se aplican en caliente para poder afinarlos viendo el visualizador, sin
-        // soltar las teclas que el usuario tenga pulsadas.
-        var mouseSettings = new MouseSettingsViewModel(
-            repository,
-            profile,
-            onApplied: applied => _emulation?.ChangeMouseSettings(applied));
-
         var viewModel = new MainViewModel(
             _emulation,
             profile,
             BackendResolver.DescribeBackend(settings.PreferredBackend),
-            bindingEditor,
-            mouseSettings);
+            repository,
+            profileService,
+            settingsRepository,
+            settings,
+            name => System.Windows.MessageBox.Show(
+                $"¿Eliminar el perfil \"{name}\"?",
+                "Virtual Controller",
+                System.Windows.MessageBoxButton.YesNo,
+                System.Windows.MessageBoxImage.Warning) == System.Windows.MessageBoxResult.Yes,
+            _logger);
 
-        new MainWindow(viewModel).Show();
+        new MainWindow(viewModel, settings).Show();
     }
 
     /// <summary>
@@ -116,8 +120,25 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        _logger.Information("application-stop", "Virtual Controller finalizado.");
         ShutdownEmulationSafely();
         base.OnExit(e);
+    }
+
+    private static IAppLogger CreateLogger(StoragePaths paths)
+    {
+        try
+        {
+            return new JsonFileLogger(paths);
+        }
+        catch (System.IO.IOException)
+        {
+            return NullAppLogger.Instance;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return NullAppLogger.Instance;
+        }
     }
 
     private void ShutdownEmulationSafely()

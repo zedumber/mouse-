@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using VirtualController.Core.Mapping;
+using DomainBinding = VirtualController.Core.Mapping.Binding;
 
 namespace VirtualController.App.ViewModels;
 
@@ -11,7 +12,7 @@ public sealed partial class BindingRowViewModel : ObservableObject
 {
     private readonly Action _onChanged;
 
-    public BindingRowViewModel(Binding binding, Action onChanged)
+    public BindingRowViewModel(DomainBinding binding, Action onChanged)
     {
         _onChanged = onChanged;
         _input = InputOption.For(binding.Input);
@@ -24,7 +25,7 @@ public sealed partial class BindingRowViewModel : ObservableObject
     [ObservableProperty]
     private OutputOption _output;
 
-    public Binding ToBinding() => new(Input.Value, Output.Value);
+    public DomainBinding ToBinding() => new(Input.Value, Output.Value);
 
     partial void OnInputChanged(InputOption value) => _onChanged();
 

@@ -251,6 +251,35 @@ public sealed partial class MouseSettingsViewModel : ObservableObject
         StatusMessage = "Preset cargado. Ajusta la anti-deadzone al valor del juego y guarda cuando esté listo.";
     }
 
+    /// <summary>Aplica de una vez los tres valores obtenidos por el asistente, sin estados intermedios.</summary>
+    public void ApplyCalibration(float antiDeadzone, float countsForFullDeflection, float adsSensitivity)
+    {
+        if (!float.IsFinite(antiDeadzone) || antiDeadzone < 0f || antiDeadzone > 0.3f)
+        {
+            throw new ArgumentOutOfRangeException(nameof(antiDeadzone));
+        }
+
+        if (!float.IsFinite(countsForFullDeflection) || countsForFullDeflection < 20f || countsForFullDeflection > 2000f)
+        {
+            throw new ArgumentOutOfRangeException(nameof(countsForFullDeflection));
+        }
+
+        if (!float.IsFinite(adsSensitivity) || adsSensitivity < 0.2f || adsSensitivity > 1f)
+        {
+            throw new ArgumentOutOfRangeException(nameof(adsSensitivity));
+        }
+
+        _suspendApply = true;
+        OutputAntiDeadzone = antiDeadzone;
+        CountsForFullDeflection = countsForFullDeflection;
+        AdsEnabled = true;
+        AdsSensitivityMultiplier = adsSensitivity;
+        _suspendApply = false;
+
+        MarkChangedAndApply();
+        StatusMessage = "Calibración aplicada (pendiente de guardar).";
+    }
+
     private MouseSettingsDraft BuildDraft() => new()
     {
         CountsForFullDeflection = CountsForFullDeflection,

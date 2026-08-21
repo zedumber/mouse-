@@ -31,32 +31,28 @@ public class ViGEmXbox360BackendTests
     }
 
     [Fact]
-    public void Connect_ReportsAccurateStatusForThisMachine()
+    public void Connect_WhenDriverIsMissing_ReturnsActionableStatus()
     {
+        if (ViGEmBusIsInstalled())
+        {
+            return;
+        }
+
         using var backend = new ViGEmXbox360Backend();
 
         var result = backend.Connect();
 
-        // El test afirma algo en ambos casos, en vez de saltarse silenciosamente cuando el driver
-        // está presente: un test que se auto-desactiva da confianza falsa.
-        if (ViGEmBusIsInstalled())
-        {
-            Assert.True(result.IsConnected, $"Con ViGEmBus instalado debería conectar: {result.Detail}");
-            Assert.True(backend.IsConnected);
-        }
-        else
-        {
-            Assert.Equal(GamepadConnectionStatus.BackendNotInstalled, result.Status);
-            Assert.False(backend.IsConnected);
-            Assert.NotNull(result.Detail);
-        }
+        Assert.Equal(GamepadConnectionStatus.BackendNotInstalled, result.Status);
+        Assert.False(backend.IsConnected);
+        Assert.NotNull(result.Detail);
     }
 
     [Fact]
-    public void Connect_LeavesDeviceInNeutralState()
+    public void ConnectSubmitAndReset_AreVisibleThroughTheSameXInputDevice()
     {
-        // Regresión: un mando recién creado reportaba valores basura por XInput (~10% de deflexión) y
-        // un Submit neutro no lo corregía, así que el juego veía el stick desviado nada más arrancar.
+        // XInput puede conservar durante un instante el slot del mando creado por un test anterior y
+        // reutilizar ese mismo índice. Se identifica nuestro dispositivo con un estado marcador antes
+        // de comprobar el neutro; "el primer mando" o "un slot nuevo" producen falsos negativos.
         if (!ViGEmBusIsInstalled())
         {
             return;
@@ -65,37 +61,30 @@ public class ViGEmXbox360BackendTests
         using var backend = new ViGEmXbox360Backend();
         Assert.True(backend.Connect().IsConnected);
 
-        var state = XInputProbe.ReadFirstConnected();
-
-        Assert.NotNull(state);
-        Assert.Equal(0, state!.Value.ThumbLX);
-        Assert.Equal(0, state.Value.ThumbLY);
-        Assert.Equal(0, state.Value.ThumbRX);
-        Assert.Equal(0, state.Value.ThumbRY);
-        Assert.Equal(0, state.Value.LeftTrigger);
-        Assert.Equal(0, state.Value.RightTrigger);
-        Assert.Equal(0, state.Value.Buttons);
-    }
-
-    [Fact]
-    public void Submit_IsVisibleThroughXInput()
-    {
-        if (!ViGEmBusIsInstalled())
+        backend.Submit(GamepadState.Neutral with
         {
-            return;
-        }
+            LeftStickX = 0.5f,
+            LeftStickY = 1f,
+            RightTrigger = 0.75f,
+        });
+        var identified = XInputProbe.WaitForController(
+            gamepad => gamepad.ThumbLX is > 16000 and < 17000
+                && gamepad.ThumbLY > 30000
+                && gamepad.RightTrigger is >= 190 and <= 192,
+            TimeSpan.FromSeconds(2));
 
-        using var backend = new ViGEmXbox360Backend();
-        Assert.True(backend.Connect().IsConnected);
+        Assert.NotNull(identified);
+        Assert.True(identified!.Value.Gamepad.ThumbLY > 30000);
+        Assert.Equal(191, identified.Value.Gamepad.RightTrigger);
 
-        backend.Submit(GamepadState.Neutral with { LeftStickY = 1f, RightTrigger = 1f });
-        Thread.Sleep(20);
-
-        var state = XInputProbe.ReadFirstConnected();
+        backend.Reset();
+        var state = XInputProbe.WaitForState(
+            identified.Value.Index,
+            IsNeutral,
+            TimeSpan.FromSeconds(2));
 
         Assert.NotNull(state);
-        Assert.True(state!.Value.ThumbLY > 30000, $"ThumbLY={state.Value.ThumbLY}");
-        Assert.Equal(255, state.Value.RightTrigger);
+        Assert.True(IsNeutral(state!.Value));
     }
 
     [Fact]
@@ -138,4 +127,13 @@ public class ViGEmXbox360BackendTests
         backend.Dispose();
         backend.Dispose();
     }
+
+    private static bool IsNeutral(XInputProbe.XInputGamepad state) =>
+        state.ThumbLX == 0
+        && state.ThumbLY == 0
+        && state.ThumbRX == 0
+        && state.ThumbRY == 0
+        && state.LeftTrigger == 0
+        && state.RightTrigger == 0
+        && state.Buttons == 0;
 }

@@ -75,6 +75,23 @@ public class RawInputParserTests
         Assert.True(digital.IsActive);
     }
 
+    [Theory]
+    [InlineData(0x11, Key.LeftControl)]
+    [InlineData(0x12, Key.LeftAlt)]
+    [InlineData(0x1B, Key.Escape)]
+    [InlineData(0x4D, Key.M)]
+    public void HotkeyKeys_AreTranslatedFromRawInput(ushort virtualKey, Key expected)
+    {
+        var keyboard = new RawKeyboard { VKey = virtualKey, Flags = 0 };
+        var buffer = BuildRawInput(NativeMethods.RimTypeKeyboard, keyboard);
+
+        var input = Assert.Single(RawInputParser.Parse(buffer, captureTimestamp: 123));
+
+        var digital = Assert.IsType<InputEvent.Digital>(input);
+        Assert.Equal(PhysicalInput.FromKey(expected), digital.Input);
+        Assert.True(digital.IsActive);
+    }
+
     [Fact]
     public void KeyUp_KnownKey_ProducesInactiveDigitalEvent()
     {
