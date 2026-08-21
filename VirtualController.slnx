@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/VirtualController.App/VirtualController.App.csproj" />
+    <Project Path="src/VirtualController.Core/VirtualController.Core.csproj" />
+    <Project Path="src/VirtualController.Infrastructure/VirtualController.Infrastructure.csproj" />
+    <Project Path="src/VirtualController.VirtualGamepad/VirtualController.VirtualGamepad.csproj" />
+    <Project Path="src/VirtualController.Windows/VirtualController.Windows.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/VirtualController.App.Tests/VirtualController.App.Tests.csproj" />
+    <Project Path="tests/VirtualController.Core.Tests/VirtualController.Core.Tests.csproj" />
+    <Project Path="tests/VirtualController.Input.Tests/VirtualController.Input.Tests.csproj" />
+    <Project Path="tests/VirtualController.Mapping.Tests/VirtualController.Mapping.Tests.csproj" />
+    <Project Path="tests/VirtualController.TestUtilities/VirtualController.TestUtilities.csproj" />
+    <Project Path="tests/VirtualController.VirtualGamepad.Tests/VirtualController.VirtualGamepad.Tests.csproj" />
+  </Folder>
+</Solution>

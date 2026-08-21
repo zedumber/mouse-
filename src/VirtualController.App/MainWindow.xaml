@@ -1,0 +1,427 @@
+<Window x:Class="VirtualController.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:VirtualController.App"
+        Title="Virtual Controller" Height="640" Width="520"
+        Background="#1E1E1E" Foreground="#E8E8E8"
+        FontFamily="Segoe UI">
+
+    <Window.Resources>
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#E8E8E8"/>
+        </Style>
+        <Style x:Key="SectionHeader" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#8FB3FF"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,16,0,8"/>
+        </Style>
+        <Style x:Key="Label" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#A0A0A0"/>
+        </Style>
+    </Window.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="20">
+
+            <TextBlock Text="Virtual Controller" FontSize="20" FontWeight="SemiBold"/>
+
+            <TextBlock Text="ESTADO" Style="{StaticResource SectionHeader}"/>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="160"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Text="Status" Style="{StaticResource Label}"/>
+                <TextBlock Grid.Column="1" Text="{Binding Status}"/>
+
+                <TextBlock Grid.Row="1" Text="Backend" Style="{StaticResource Label}"/>
+                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding BackendName}"/>
+
+                <TextBlock Grid.Row="2" Text="Perfil" Style="{StaticResource Label}"/>
+                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding ProfileName}"/>
+            </Grid>
+
+            <Button Content="{Binding StartStopLabel}"
+                    Command="{Binding ToggleEmulationCommand}"
+                    Height="40" Margin="0,16,0,0"
+                    Background="#2D5BE3" Foreground="White" BorderThickness="0"
+                    FontWeight="SemiBold"/>
+
+            <Button Content="PARADA DE EMERGENCIA"
+                    Command="{Binding EmergencyStopCommand}"
+                    Height="32" Margin="0,8,0,0"
+                    Background="#8B2635" Foreground="White" BorderThickness="0"/>
+
+            <Border Background="#3A1D22" Padding="12" Margin="0,12,0,0"
+                    Visibility="{Binding ErrorMessage, Converter={StaticResource NullToCollapsed}}">
+                <TextBlock Text="{Binding ErrorMessage}" TextWrapping="Wrap" Foreground="#FFB3B3"/>
+            </Border>
+
+            <TextBlock Text="VISUALIZADOR EN TIEMPO REAL" Style="{StaticResource SectionHeader}"/>
+            <StackPanel Orientation="Horizontal">
+                <StackPanel Margin="0,0,24,0">
+                    <TextBlock Text="Stick izquierdo (WASD)" Style="{StaticResource Label}"
+                               HorizontalAlignment="Center" Margin="0,0,0,6"/>
+                    <Border Width="140" Height="140" Background="#252526" CornerRadius="70"
+                            BorderBrush="#3E3E42" BorderThickness="1">
+                        <Canvas x:Name="LeftStickCanvas" Width="140" Height="140">
+                            <Line X1="70" Y1="0" X2="70" Y2="140" Stroke="#333337" StrokeThickness="1"/>
+                            <Line X1="0" Y1="70" X2="140" Y2="70" Stroke="#333337" StrokeThickness="1"/>
+                            <Ellipse x:Name="LeftStickDot" Width="16" Height="16" Fill="#4E8CFF"/>
+                        </Canvas>
+                    </Border>
+                    <TextBlock x:Name="LeftStickText" HorizontalAlignment="Center" Margin="0,6,0,0"
+                               FontFamily="Consolas" FontSize="11"/>
+                </StackPanel>
+
+                <StackPanel>
+                    <TextBlock Text="Stick derecho (mouse)" Style="{StaticResource Label}"
+                               HorizontalAlignment="Center" Margin="0,0,0,6"/>
+                    <Border Width="140" Height="140" Background="#252526" CornerRadius="70"
+                            BorderBrush="#3E3E42" BorderThickness="1">
+                        <Canvas x:Name="RightStickCanvas" Width="140" Height="140">
+                            <Line X1="70" Y1="0" X2="70" Y2="140" Stroke="#333337" StrokeThickness="1"/>
+                            <Line X1="0" Y1="70" X2="140" Y2="70" Stroke="#333337" StrokeThickness="1"/>
+                            <Ellipse x:Name="RightStickDot" Width="16" Height="16" Fill="#7BD88F"/>
+                        </Canvas>
+                    </Border>
+                    <TextBlock x:Name="RightStickText" HorizontalAlignment="Center" Margin="0,6,0,0"
+                               FontFamily="Consolas" FontSize="11"/>
+                </StackPanel>
+            </StackPanel>
+
+            <TextBlock Text="GATILLOS" Style="{StaticResource SectionHeader}"/>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="40"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Text="LT" Style="{StaticResource Label}" VerticalAlignment="Center"/>
+                <ProgressBar x:Name="LeftTriggerBar" Grid.Column="1" Height="14" Maximum="1"
+                             Background="#252526" Foreground="#E3A02D" BorderThickness="0"/>
+
+                <TextBlock Grid.Row="1" Text="RT" Style="{StaticResource Label}"
+                           VerticalAlignment="Center" Margin="0,8,0,0"/>
+                <ProgressBar x:Name="RightTriggerBar" Grid.Row="1" Grid.Column="1" Height="14" Maximum="1"
+                             Background="#252526" Foreground="#E3A02D" BorderThickness="0" Margin="0,8,0,0"/>
+            </Grid>
+
+            <TextBlock Text="BOTONES" Style="{StaticResource SectionHeader}"/>
+            <TextBlock x:Name="ButtonsText" FontFamily="Consolas" FontSize="12" Text="—"/>
+
+            <TextBlock Text="DIAGNÓSTICO" Style="{StaticResource SectionHeader}"/>
+            <TextBlock Text="{Binding MetricsText}" FontFamily="Consolas" FontSize="11"
+                       TextWrapping="Wrap" Foreground="#A0A0A0"/>
+
+            <TextBlock Text="AJUSTES DE MOUSE" Style="{StaticResource SectionHeader}"/>
+            <TextBlock Text="Los cambios se aplican al instante para que puedas afinarlos mirando el visualizador. Guardar los escribe en el perfil."
+                       Style="{StaticResource Label}" TextWrapping="Wrap" Margin="0,0,0,10"/>
+
+            <Grid DataContext="{Binding MouseSettings}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="150"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="56"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/>
+                    <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/>
+                    <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/>
+                    <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/>
+                    <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/>
+                    <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Text="Sensibilidad X" Style="{StaticResource Label}" VerticalAlignment="Center"/>
+                <Slider Grid.Column="1" Minimum="0.1" Maximum="10" VerticalAlignment="Center"
+                        Value="{Binding SensitivityX, Mode=TwoWay}"/>
+                <TextBlock Grid.Column="2" Text="{Binding SensitivityX, StringFormat={}{0:F2}}"
+                           VerticalAlignment="Center" HorizontalAlignment="Right" FontFamily="Consolas"/>
+
+                <TextBlock Grid.Row="1" Text="Sensibilidad Y" Style="{StaticResource Label}" VerticalAlignment="Center"/>
+                <Slider Grid.Row="1" Grid.Column="1" Minimum="0.1" Maximum="10" VerticalAlignment="Center"
+                        Value="{Binding SensitivityY, Mode=TwoWay}"/>
+                <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding SensitivityY, StringFormat={}{0:F2}}"
+                           VerticalAlignment="Center" HorizontalAlignment="Right" FontFamily="Consolas"/>
+
+                <TextBlock Grid.Row="2" Text="Recorrido completo" Style="{StaticResource Label}" VerticalAlignment="Center"
+                           ToolTip="Píxeles de movimiento que equivalen a llevar el stick al máximo"/>
+                <Slider Grid.Row="2" Grid.Column="1" Minimum="10" Maximum="1000" VerticalAlignment="Center"
+                        Value="{Binding CountsForFullDeflection, Mode=TwoWay}"/>
+                <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding CountsForFullDeflection, StringFormat={}{0:F0}}"
+                           VerticalAlignment="Center" HorizontalAlignment="Right" FontFamily="Consolas"/>
+
+                <TextBlock Grid.Row="3" Text="Invertir ejes" Style="{StaticResource Label}" VerticalAlignment="Center"/>
+                <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal" Margin="0,4">
+                    <CheckBox Content="X" Foreground="#E8E8E8" IsChecked="{Binding InvertX, Mode=TwoWay}" Margin="0,0,16,0"/>
+                    <CheckBox Content="Y" Foreground="#E8E8E8" IsChecked="{Binding InvertY, Mode=TwoWay}"/>
+                </StackPanel>
+
+                <TextBlock Grid.Row="4" Text="Zona muerta interior" Style="{StaticResource Label}" VerticalAlignment="Center"/>
+                <Slider Grid.Row="4" Grid.Column="1" Minimum="0" Maximum="0.9" VerticalAlignment="Center"
+                        Value="{Binding DeadzoneInner, Mode=TwoWay}"/>
+                <TextBlock Grid.Row="4" Grid.Column="2" Text="{Binding DeadzoneInner, StringFormat={}{0:F2}}"
+                           VerticalAlignment="Center" HorizontalAlignment="Right" FontFamily="Consolas"/>
+
+                <TextBlock Grid.Row="5" Text="Zona muerta exterior" Style="{StaticResource Label}" VerticalAlignment="Center"/>
+                <Slider Grid.Row="5" Grid.Column="1" Minimum="0.1" Maximum="1" VerticalAlignment="Center"
+                        Value="{Binding DeadzoneOuter, Mode=TwoWay}"/>
+                <TextBlock Grid.Row="5" Grid.Column="2" Text="{Binding DeadzoneOuter, StringFormat={}{0:F2}}"
+                           VerticalAlignment="Center" HorizontalAlignment="Right" FontFamily="Consolas"/>
+
+                <TextBlock Grid.Row="6" Text="Escala de salida" Style="{StaticResource Label}" VerticalAlignment="Center"
+                           ToolTip="Ganancia general después de la curva; no cambia el límite máximo"/>
+                <Slider Grid.Row="6" Grid.Column="1" Minimum="0.1" Maximum="2" VerticalAlignment="Center"
+                        Value="{Binding OutputScale, Mode=TwoWay}"/>
+                <TextBlock Grid.Row="6" Grid.Column="2" Text="{Binding OutputScale, StringFormat={}{0:F2}}"
+                           VerticalAlignment="Center" HorizontalAlignment="Right" FontFamily="Consolas"/>
+
+                <TextBlock Grid.Row="7" Text="Anti-deadzone juego" Style="{StaticResource Label}" VerticalAlignment="Center"
+                           ToolTip="Salida mínima para superar la zona muerta interna del juego"/>
+                <Slider Grid.Row="7" Grid.Column="1" Minimum="0" Maximum="0.3" VerticalAlignment="Center"
+                        Value="{Binding OutputAntiDeadzone, Mode=TwoWay}"/>
+                <TextBlock Grid.Row="7" Grid.Column="2" Text="{Binding OutputAntiDeadzone, StringFormat={}{0:F2}}"
+                           VerticalAlignment="Center" HorizontalAlignment="Right" FontFamily="Consolas"/>
+
+                <TextBlock Grid.Row="8" Text="Salida máxima" Style="{StaticResource Label}" VerticalAlignment="Center"/>
+                <Slider Grid.Row="8" Grid.Column="1" Minimum="0.1" Maximum="1" VerticalAlignment="Center"
+                        Value="{Binding MaximumOutput, Mode=TwoWay}"/>
+                <TextBlock Grid.Row="8" Grid.Column="2" Text="{Binding MaximumOutput, StringFormat={}{0:F2}}"
+                           VerticalAlignment="Center" HorizontalAlignment="Right" FontFamily="Consolas"/>
+
+                <TextBlock Grid.Row="9" Text="Curva de respuesta" Style="{StaticResource Label}" VerticalAlignment="Center"/>
+                <ComboBox Grid.Row="9" Grid.Column="1" Height="26" Margin="0,4"
+                          ItemsSource="{Binding AvailableCurves}"
+                          SelectedItem="{Binding CurveKind, Mode=TwoWay}"/>
+
+                <TextBlock Grid.Row="10" Text="{Binding CurveParameterLabel}" Style="{StaticResource Label}"
+                           VerticalAlignment="Center"
+                           Visibility="{Binding CurveParameterApplies, Converter={StaticResource BoolToVisible}}"/>
+                <Slider Grid.Row="10" Grid.Column="1" Minimum="0.2" Maximum="8" VerticalAlignment="Center"
+                        Value="{Binding CurveParameter, Mode=TwoWay}"
+                        Visibility="{Binding CurveParameterApplies, Converter={StaticResource BoolToVisible}}"/>
+                <TextBlock Grid.Row="10" Grid.Column="2" Text="{Binding CurveParameter, StringFormat={}{0:F2}}"
+                           VerticalAlignment="Center" HorizontalAlignment="Right" FontFamily="Consolas"
+                           Visibility="{Binding CurveParameterApplies, Converter={StaticResource BoolToVisible}}"/>
+
+                <TextBlock Grid.Row="11" Text="Exponente de giro" Style="{StaticResource Label}" VerticalAlignment="Center"
+                           Visibility="{Binding DualZoneParametersApply, Converter={StaticResource BoolToVisible}}"/>
+                <Slider Grid.Row="11" Grid.Column="1" Minimum="0.2" Maximum="3" VerticalAlignment="Center"
+                        Value="{Binding CurveSecondaryParameter, Mode=TwoWay}"
+                        Visibility="{Binding DualZoneParametersApply, Converter={StaticResource BoolToVisible}}"/>
+                <TextBlock Grid.Row="11" Grid.Column="2" Text="{Binding CurveSecondaryParameter, StringFormat={}{0:F2}}"
+                           VerticalAlignment="Center" HorizontalAlignment="Right" FontFamily="Consolas"
+                           Visibility="{Binding DualZoneParametersApply, Converter={StaticResource BoolToVisible}}"/>
+
+                <TextBlock Grid.Row="12" Text="Transición Dual Zone" Style="{StaticResource Label}" VerticalAlignment="Center"
+                           Visibility="{Binding DualZoneParametersApply, Converter={StaticResource BoolToVisible}}"/>
+                <Slider Grid.Row="12" Grid.Column="1" Minimum="0.1" Maximum="0.9" VerticalAlignment="Center"
+                        Value="{Binding CurveTransition, Mode=TwoWay}"
+                        Visibility="{Binding DualZoneParametersApply, Converter={StaticResource BoolToVisible}}"/>
+                <TextBlock Grid.Row="12" Grid.Column="2" Text="{Binding CurveTransition, StringFormat={}{0:F2}}"
+                           VerticalAlignment="Center" HorizontalAlignment="Right" FontFamily="Consolas"
+                           Visibility="{Binding DualZoneParametersApply, Converter={StaticResource BoolToVisible}}"/>
+
+                <TextBlock Grid.Row="13" Text="Aceleración" Style="{StaticResource Label}" VerticalAlignment="Center"
+                           ToolTip="0 = desactivada. Amplifica los movimientos rápidos."/>
+                <Slider Grid.Row="13" Grid.Column="1" Minimum="0" Maximum="5" VerticalAlignment="Center"
+                        Value="{Binding Acceleration, Mode=TwoWay}"/>
+                <TextBlock Grid.Row="13" Grid.Column="2" Text="{Binding Acceleration, StringFormat={}{0:F2}}"
+                           VerticalAlignment="Center" HorizontalAlignment="Right" FontFamily="Consolas"/>
+
+                <TextBlock Grid.Row="14" Text="Retorno al centro" Style="{StaticResource Label}" VerticalAlignment="Center"/>
+                <ComboBox Grid.Row="14" Grid.Column="1" Height="26" Margin="0,4"
+                          ItemsSource="{Binding AvailableDecays}"
+                          SelectedItem="{Binding DecayKind, Mode=TwoWay}"/>
+
+                <TextBlock Grid.Row="15" Text="Velocidad de retorno" Style="{StaticResource Label}" VerticalAlignment="Center"
+                           Visibility="{Binding DecaySpeedApplies, Converter={StaticResource BoolToVisible}}"/>
+                <Slider Grid.Row="15" Grid.Column="1" Minimum="0.5" Maximum="30" VerticalAlignment="Center"
+                        Value="{Binding DecaySpeed, Mode=TwoWay}"
+                        Visibility="{Binding DecaySpeedApplies, Converter={StaticResource BoolToVisible}}"/>
+                <TextBlock Grid.Row="15" Grid.Column="2" Text="{Binding DecaySpeed, StringFormat={}{0:F1}}"
+                           VerticalAlignment="Center" HorizontalAlignment="Right" FontFamily="Consolas"
+                           Visibility="{Binding DecaySpeedApplies, Converter={StaticResource BoolToVisible}}"/>
+
+                <TextBlock Grid.Row="16" Text="Retención antes retorno" Style="{StaticResource Label}" VerticalAlignment="Center"
+                           ToolTip="Evita que el stick vuelva al centro entre paquetes del mouse"/>
+                <Slider Grid.Row="16" Grid.Column="1" Minimum="0" Maximum="35" VerticalAlignment="Center"
+                        Value="{Binding DecayDelayMilliseconds, Mode=TwoWay}"/>
+                <TextBlock Grid.Row="16" Grid.Column="2" Text="{Binding DecayDelayMilliseconds, StringFormat={}{0:F0} ms}"
+                           VerticalAlignment="Center" HorizontalAlignment="Right" FontFamily="Consolas"/>
+
+                <TextBlock Grid.Row="17" Text="Suavizado" Style="{StaticResource Label}" VerticalAlignment="Center"
+                           ToolTip="Desactivado por defecto: añade latencia."/>
+                <CheckBox Grid.Row="17" Grid.Column="1" Content="Activar" Foreground="#E8E8E8" Margin="0,4"
+                          IsChecked="{Binding SmoothingEnabled, Mode=TwoWay}"/>
+
+                <TextBlock Grid.Row="18" Text="Intensidad suavizado" Style="{StaticResource Label}" VerticalAlignment="Center"
+                           Visibility="{Binding SmoothingEnabled, Converter={StaticResource BoolToVisible}}"/>
+                <Slider Grid.Row="18" Grid.Column="1" Minimum="0" Maximum="0.95" VerticalAlignment="Center"
+                        Value="{Binding SmoothingStrength, Mode=TwoWay}"
+                        Visibility="{Binding SmoothingEnabled, Converter={StaticResource BoolToVisible}}"/>
+                <TextBlock Grid.Row="18" Grid.Column="2" Text="{Binding SmoothingStrength, StringFormat={}{0:F2}}"
+                           VerticalAlignment="Center" HorizontalAlignment="Right" FontFamily="Consolas"
+                           Visibility="{Binding SmoothingEnabled, Converter={StaticResource BoolToVisible}}"/>
+
+                <TextBlock Grid.Row="19" Text="Suavizado adaptativo" Style="{StaticResource Label}" VerticalAlignment="Center"
+                           Visibility="{Binding SmoothingEnabled, Converter={StaticResource BoolToVisible}}"/>
+                <CheckBox Grid.Row="19" Grid.Column="1" Content="Menos filtro al girar rápido" Foreground="#E8E8E8" Margin="0,4"
+                          IsChecked="{Binding AdaptiveSmoothingEnabled, Mode=TwoWay}"
+                          Visibility="{Binding SmoothingEnabled, Converter={StaticResource BoolToVisible}}"/>
+
+                <TextBlock Grid.Row="20" Text="Respuesta adaptativa" Style="{StaticResource Label}" VerticalAlignment="Center"
+                           Visibility="{Binding AdaptiveSmoothingEnabled, Converter={StaticResource BoolToVisible}}"/>
+                <Slider Grid.Row="20" Grid.Column="1" Minimum="0" Maximum="10" VerticalAlignment="Center"
+                        Value="{Binding AdaptiveSmoothingResponsiveness, Mode=TwoWay}"
+                        Visibility="{Binding AdaptiveSmoothingEnabled, Converter={StaticResource BoolToVisible}}"/>
+                <TextBlock Grid.Row="20" Grid.Column="2" Text="{Binding AdaptiveSmoothingResponsiveness, StringFormat={}{0:F1}}"
+                           VerticalAlignment="Center" HorizontalAlignment="Right" FontFamily="Consolas"
+                           Visibility="{Binding AdaptiveSmoothingEnabled, Converter={StaticResource BoolToVisible}}"/>
+
+                <TextBlock Grid.Row="21" Text="Modo ADS" Style="{StaticResource Label}" VerticalAlignment="Center"
+                           ToolTip="Se activa cuando el mapping pulsa el gatillo izquierdo"/>
+                <CheckBox Grid.Row="21" Grid.Column="1" Content="Precisión al apuntar" Foreground="#E8E8E8" Margin="0,4"
+                          IsChecked="{Binding AdsEnabled, Mode=TwoWay}"/>
+
+                <TextBlock Grid.Row="22" Text="Sensibilidad ADS" Style="{StaticResource Label}" VerticalAlignment="Center"
+                           Visibility="{Binding AdsEnabled, Converter={StaticResource BoolToVisible}}"/>
+                <Slider Grid.Row="22" Grid.Column="1" Minimum="0.1" Maximum="1.5" VerticalAlignment="Center"
+                        Value="{Binding AdsSensitivityMultiplier, Mode=TwoWay}"
+                        Visibility="{Binding AdsEnabled, Converter={StaticResource BoolToVisible}}"/>
+                <TextBlock Grid.Row="22" Grid.Column="2" Text="{Binding AdsSensitivityMultiplier, StringFormat={}{0:F2}}"
+                           VerticalAlignment="Center" HorizontalAlignment="Right" FontFamily="Consolas"
+                           Visibility="{Binding AdsEnabled, Converter={StaticResource BoolToVisible}}"/>
+
+                <TextBlock Grid.Row="23" Text="Salida máxima ADS" Style="{StaticResource Label}" VerticalAlignment="Center"
+                           Visibility="{Binding AdsEnabled, Converter={StaticResource BoolToVisible}}"/>
+                <Slider Grid.Row="23" Grid.Column="1" Minimum="0.1" Maximum="1" VerticalAlignment="Center"
+                        Value="{Binding AdsMaximumOutput, Mode=TwoWay}"
+                        Visibility="{Binding AdsEnabled, Converter={StaticResource BoolToVisible}}"/>
+                <TextBlock Grid.Row="23" Grid.Column="2" Text="{Binding AdsMaximumOutput, StringFormat={}{0:F2}}"
+                           VerticalAlignment="Center" HorizontalAlignment="Right" FontFamily="Consolas"
+                           Visibility="{Binding AdsEnabled, Converter={StaticResource BoolToVisible}}"/>
+
+                <TextBlock Grid.Row="24" Text="Precisión ADS" Style="{StaticResource Label}" VerticalAlignment="Center"
+                           Visibility="{Binding AdsEnabled, Converter={StaticResource BoolToVisible}}"/>
+                <Slider Grid.Row="24" Grid.Column="1" Minimum="0.5" Maximum="3" VerticalAlignment="Center"
+                        Value="{Binding AdsPrecisionExponent, Mode=TwoWay}"
+                        Visibility="{Binding AdsEnabled, Converter={StaticResource BoolToVisible}}"/>
+                <TextBlock Grid.Row="24" Grid.Column="2" Text="{Binding AdsPrecisionExponent, StringFormat={}{0:F2}}"
+                           VerticalAlignment="Center" HorizontalAlignment="Right" FontFamily="Consolas"
+                           Visibility="{Binding AdsEnabled, Converter={StaticResource BoolToVisible}}"/>
+            </Grid>
+
+            <Border Background="#3A1D22" Padding="10" Margin="0,8,0,0"
+                    DataContext="{Binding MouseSettings}"
+                    Visibility="{Binding ValidationError, Converter={StaticResource NullToCollapsed}}">
+                <TextBlock Text="{Binding ValidationError}" TextWrapping="Wrap" Foreground="#FFB3B3"/>
+            </Border>
+
+            <StackPanel Orientation="Horizontal" Margin="0,10,0,0" DataContext="{Binding MouseSettings}">
+                <Button Content="Guardar en el perfil" Height="30" Padding="14,0"
+                        Background="#2D5BE3" Foreground="White" BorderThickness="0" FontWeight="SemiBold"
+                        Command="{Binding SaveCommand}" IsEnabled="{Binding CanSave}"/>
+                <Button Content="Revertir" Height="30" Padding="12,0" Margin="8,0,0,0"
+                        Background="#2A2A2C" Foreground="#A0A0A0" BorderThickness="0"
+                        Command="{Binding RevertCommand}" IsEnabled="{Binding HasUnsavedChanges}"/>
+                <Button Content="Valores por defecto" Height="30" Padding="12,0" Margin="8,0,0,0"
+                        Background="#2A2A2C" Foreground="#A0A0A0" BorderThickness="0"
+                        Command="{Binding ResetToDefaultsCommand}"/>
+                <TextBlock Text="{Binding StatusMessage}" Foreground="#7BD88F" Margin="12,0,0,0"
+                           VerticalAlignment="Center"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Margin="0,8,0,0" DataContext="{Binding MouseSettings}">
+                <TextBlock Text="Presets:" Style="{StaticResource Label}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <Button Content="Equilibrado" Height="28" Padding="10,0" Command="{Binding ApplyBalancedAimPresetCommand}"/>
+                <Button Content="Precisión" Height="28" Padding="10,0" Margin="6,0,0,0" Command="{Binding ApplyPrecisionAimPresetCommand}"/>
+                <Button Content="Respuesta rápida" Height="28" Padding="10,0" Margin="6,0,0,0" Command="{Binding ApplyResponsiveAimPresetCommand}"/>
+            </StackPanel>
+
+            <TextBlock Text="BINDINGS" Style="{StaticResource SectionHeader}"/>
+            <TextBlock Text="Elige qué hace cada tecla o botón. Los cambios se aplican al guardar."
+                       Style="{StaticResource Label}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+
+            <ItemsControl ItemsSource="{Binding BindingEditor.Rows}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Margin="0,0,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <ComboBox ItemsSource="{Binding DataContext.BindingEditor.AvailableInputs,
+                                                    RelativeSource={RelativeSource AncestorType=Window}}"
+                                      SelectedItem="{Binding Input, Mode=TwoWay}"
+                                      DisplayMemberPath="Display"
+                                      Height="26"/>
+
+                            <TextBlock Grid.Column="1" Text="  →  " VerticalAlignment="Center"
+                                       Foreground="#8FB3FF"/>
+
+                            <ComboBox Grid.Column="2"
+                                      ItemsSource="{Binding DataContext.BindingEditor.AvailableOutputs,
+                                                    RelativeSource={RelativeSource AncestorType=Window}}"
+                                      SelectedItem="{Binding Output, Mode=TwoWay}"
+                                      DisplayMemberPath="Display"
+                                      Height="26"/>
+
+                            <Button Grid.Column="3" Content="✕" Width="26" Height="26" Margin="6,0,0,0"
+                                    ToolTip="Eliminar este binding"
+                                    Background="#3A1D22" Foreground="#FFB3B3" BorderThickness="0"
+                                    Command="{Binding DataContext.BindingEditor.RemoveBindingCommand,
+                                              RelativeSource={RelativeSource AncestorType=Window}}"
+                                    CommandParameter="{Binding}"/>
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <Border Background="#3A1D22" Padding="10" Margin="0,8,0,0"
+                    Visibility="{Binding BindingEditor.ValidationError,
+                                 Converter={StaticResource NullToCollapsed}}">
+                <TextBlock Text="{Binding BindingEditor.ValidationError}" TextWrapping="Wrap"
+                           Foreground="#FFB3B3"/>
+            </Border>
+
+            <TextBlock Text="{Binding BindingEditor.StatusMessage}" Foreground="#7BD88F"
+                       Margin="0,8,0,0"
+                       Visibility="{Binding BindingEditor.StatusMessage,
+                                    Converter={StaticResource NullToCollapsed}}"/>
+
+            <StackPanel Orientation="Horizontal" Margin="0,10,0,20">
+                <Button Content="+ Añadir binding" Height="30" Padding="12,0"
+                        Background="#2A2A2C" Foreground="#E8E8E8" BorderThickness="0"
+                        Command="{Binding BindingEditor.AddBindingCommand}"/>
+
+                <Button Content="Guardar" Height="30" Padding="16,0" Margin="8,0,0,0"
+                        Background="#2D5BE3" Foreground="White" BorderThickness="0"
+                        FontWeight="SemiBold"
+                        Command="{Binding BindingEditor.SaveCommand}"
+                        IsEnabled="{Binding BindingEditor.CanSave}"/>
+
+                <Button Content="Descartar" Height="30" Padding="12,0" Margin="8,0,0,0"
+                        Background="#2A2A2C" Foreground="#A0A0A0" BorderThickness="0"
+                        Command="{Binding BindingEditor.DiscardCommand}"
+                        IsEnabled="{Binding BindingEditor.HasUnsavedChanges}"/>
+            </StackPanel>
+
+        </StackPanel>
+    </ScrollViewer>
+</Window>
